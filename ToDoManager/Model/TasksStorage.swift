@@ -13,17 +13,43 @@ protocol TasksStorageProtocol {
 }
 
 class TasksStorage: TasksStorageProtocol{
+    
+    private var storage = UserDefaults.standard
+    
+    var storageKey: String = "tasks"
+    
+    private enum TaskKey: String{
+        case title
+        case type
+        case status
+    }
+    
     func saveTasks(_ tasks: [TaskProtocol]) {
+        var arrayForStorage: [[String:String]] = []
+        tasks.forEach { task in
+            var newElementForStorage: [String: String] = [:]
+            newElementForStorage[TaskKey.title.rawValue] = task.title
+            newElementForStorage[TaskKey.type.rawValue] = task.type == .important ? "important" : "normal"
+            newElementForStorage[TaskKey.status.rawValue] = task.status == .completed ? "completed" : "planned"
+            arrayForStorage.append(newElementForStorage)
+        }
+        storage.set(arrayForStorage, forKey: storageKey)
     }
     
     func loadTasks() -> [TaskProtocol] {
-        let tasks: [TaskProtocol] = [Task(title: "Buy coffee", type: .normal, status: .planned),
-                                     Task(title: "Walk 10000 steps", type: .important, status: .planned),
-                                     Task(title: "Iron the jacket", type: .normal, status: .planned),
-                                     Task(title: "Water the greens", type: .normal, status: .completed),
-                                     Task(title: "Cook food", type: .normal, status: .planned),
-                                     Task(title: "Try to feel myself comfortable during this period of time", type: .important, status: .planned)]
+        var resultTasks:[TaskProtocol] = []
+        let tasksFromStorage = storage.array(forKey: storageKey) as? [[String:String]] ?? []
         
-        return tasks
+        for task in tasksFromStorage {
+            guard let title = task[TaskKey.title.rawValue],
+                  let typeRaw = task[TaskKey.type.rawValue],
+                  let statusRaw = task[TaskKey.status.rawValue] else { continue }
+            
+            let type:TaskPriority = typeRaw == "important" ? .important : .normal
+            let status:TaskStatus = statusRaw == "planned" ? .planned : .completed
+            
+            resultTasks.append(Task(title: title, type: type, status: status))
+        }
+        return resultTasks
     }
 }

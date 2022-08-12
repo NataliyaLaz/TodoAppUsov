@@ -58,6 +58,13 @@ class TaskEditController: UITableViewController {
         let type = taskType
         let status: TaskStatus = taskStatusSwitch.isOn ? .completed : .planned
         //вызываем обработчик
+        if title.trimmingCharacters(in: .whitespaces).count  == 0 {
+            let alert = UIAlertController(title: "Attention", message: "Enter the task title", preferredStyle: .alert)
+            let action = UIAlertAction(title: "OK", style: .default)
+            alert.addAction(action)
+            self.present(alert, animated: true, completion: nil)
+            return
+        }
         doAfterEdit?(title, type, status)
 
         navigationController?.popViewController(animated: true)
